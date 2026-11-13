@@ -1,0 +1,1109 @@
+<title>Invoice Guard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Kufi+Arabic:wght@600;700&display=swap">
+<style>
+/* Layout: a UAE dusk hero (animated Dubai skyline with the Burj Khalifa), then light "ledger" sections with live demos, and a dusk contact finale. */
+:root {
+  --ground: #F1F4F8;
+  --paper: #FFFFFF;
+  --paper-2: #F6F8FB;
+  --ink: #101B2B;
+  --muted: #566578;
+  --line: #D8E0E9;
+  --ledger: #1B4E96;
+  --ledger-soft: #E4EDF9;
+  --gold: #B7791F;
+  --loss: #C23A2E;
+  --loss-soft: #FBE8E5;
+  --ok: #18775A;
+  --ok-soft: #E1F3EB;
+  --shadow: rgba(16, 27, 43, 0.09);
+  /* hero and contact stay dusk in every theme */
+  --sky1: #0A1030;
+  --sky2: #262A6E;
+  --sky3: #B6507B;
+  --sky4: #FFA86B;
+  --glass: rgba(255, 255, 255, 0.12);
+  --glass-line: rgba(255, 255, 255, 0.28);
+  --gold-lit: #FFD27A;
+  --f-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
+  --f-ar: "Noto Kufi Arabic", "Segoe UI", Tahoma, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0B1119; --paper: #131C27; --paper-2: #182330; --ink: #E7EDF3; --muted: #9CAABA; --line: #273647;
+    --ledger: #88AEE8; --ledger-soft: #172840; --gold: #F0B95A; --loss: #F2796C; --loss-soft: #3A1E1C;
+    --ok: #56CA9C; --ok-soft: #14301F; --shadow: rgba(0, 0, 0, 0.4); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0B1119; --paper: #131C27; --paper-2: #182330; --ink: #E7EDF3; --muted: #9CAABA; --line: #273647;
+  --ledger: #88AEE8; --ledger-soft: #172840; --gold: #F0B95A; --loss: #F2796C; --loss-soft: #3A1E1C;
+  --ok: #56CA9C; --ok-soft: #14301F; --shadow: rgba(0, 0, 0, 0.4); color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+body { background: var(--ground); color: var(--ink); font: 400 17px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; overflow-x: clip; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--sky1); }
+a { color: var(--ledger); }
+p { margin: 0; }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(30px, 4.4vw, 50px); line-height: 1.04; font-weight: 800; letter-spacing: -0.02em; }
+h3 { font-size: 20px; line-height: 1.2; font-weight: 700; }
+.wrap { max-width: 1160px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.mono { font-family: var(--f-mono); }
+.num { font-variant-numeric: tabular-nums; }
+.eyebrow { font: 500 12.5px/1.2 var(--f-mono); letter-spacing: .13em; text-transform: uppercase; color: var(--ledger); }
+.lead { font-size: 19px; color: var(--muted); max-width: 62ch; }
+.sec { padding-block: 96px 0; }
+.head { display: grid; gap: 14px; margin-bottom: 40px; max-width: 800px; }
+.note { font-size: 13.5px; color: var(--muted); }
+
+/* progress + nav */
+.progress { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; height: 3px; width: 0; z-index: 70; background: linear-gradient(90deg, var(--sky4), var(--gold-lit)); }
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; background: rgba(10, 16, 48, 0.72); backdrop-filter: blur(14px) saturate(1.3); border-bottom: 1px solid rgba(255,255,255,.12); }
+.nav .wrap { display: flex; align-items: center; gap: 22px; height: 66px; }
+.logo { display: flex; align-items: center; gap: 10px; font: 800 19px/1 var(--f-display); color: #fff; text-decoration: none; }
+.logo svg { width: 28px; height: 28px; }
+.nav-links { display: flex; gap: 6px; margin-left: auto; }
+.logo, .nav .btn, .nav-links a { white-space: nowrap; }
+.nav-links a { color: rgba(255,255,255,.72); text-decoration: none; font-size: 14.5px; font-weight: 500; padding: 8px 12px; border-radius: 999px; transition: background .2s, color .2s; }
+.nav-links a:hover, .nav-links a.on { color: #fff; background: rgba(255,255,255,.14); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; padding: 14px 20px; font: 600 15px/1 var(--f-body); text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform .18s ease, box-shadow .18s ease, background .18s; }
+.btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,.18); }
+.btn-gold { background: linear-gradient(135deg, var(--gold-lit), var(--sky4)); color: #2A1500; }
+.btn-line { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.35); }
+.btn-blue { background: var(--ledger); color: var(--paper); }
+.btn-ghost { background: var(--paper); color: var(--ink); border-color: var(--line); }
+.btn:focus-visible, a:focus-visible, input:focus-visible, button:focus-visible, summary:focus-visible, [role="tab"]:focus-visible { outline: 2px solid var(--gold-lit); outline-offset: 3px; }
+
+/* ================= HERO ================= */
+.hero { position: relative; isolation: isolate; color: #fff; overflow: hidden; background: linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 38%, var(--sky3) 72%, var(--sky4) 100%); }
+.sky { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.sky > * { position: absolute; }
+.sun { left: 62%; bottom: 18%; width: 520px; height: 520px; margin-left: -260px; border-radius: 50%; background: radial-gradient(circle, rgba(255,214,150,.9) 0%, rgba(255,168,107,.45) 28%, rgba(255,168,107,0) 68%); animation: breathe 7s ease-in-out infinite; }
+@keyframes breathe { 50% { transform: scale(1.08); opacity: .85; } }
+.stars { inset: 0 0 40% 0; width: 100%; height: 60%; }
+.st { position: absolute; border-radius: 50%; background: #fff; }
+.tw0 { animation: tw 3.4s ease-in-out infinite; } .tw1 { animation: tw 4.7s ease-in-out .8s infinite; } .tw2 { animation: tw 5.9s ease-in-out 1.6s infinite; } .tw3 { animation: tw 2.9s ease-in-out 2.1s infinite; }
+@keyframes tw { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+.cloud { height: 54px; border-radius: 999px; background: rgba(255,255,255,.14); filter: blur(14px); animation: drift linear infinite; }
+.c1 { top: 26%; width: 340px; animation-duration: 90s; left: -400px; }
+.c2 { top: 40%; width: 260px; animation-duration: 120s; animation-delay: -50s; left: -400px; opacity: .8; }
+.c3 { top: 18%; width: 420px; animation-duration: 150s; animation-delay: -100s; left: -500px; opacity: .6; }
+@keyframes drift { to { transform: translateX(calc(100vw + 900px)); } }
+.plane { top: 22%; left: -60px; width: 70px; height: 3px; animation: fly 48s linear infinite; }
+.plane::before { content: ""; position: absolute; right: 0; top: -1px; width: 5px; height: 5px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 2px rgba(255,255,255,.9); animation: blink 1.4s steps(2) infinite; }
+.plane::after { content: ""; position: absolute; inset: 1px 6px 0 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.7)); height: 1px; }
+@keyframes blink { 50% { opacity: .2; } }
+@keyframes fly { from { transform: translate(0, 0); } to { transform: translate(calc(100vw + 160px), -60px); } }
+.lyr { left: 0; bottom: 0; width: 100%; will-change: transform; }
+.lyr svg { display: block; width: 100%; height: clamp(320px, 52vw, 560px); }
+.w { fill: #FFD98A; }
+.beacon { animation: beacon 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes beacon { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.5); } }
+.shade { inset: 0; background: linear-gradient(90deg, rgba(10,16,48,.72) 0%, rgba(10,16,48,.25) 48%, rgba(10,16,48,0) 70%); }
+
+.hero-in { position: relative; display: grid; grid-template-columns: 1.05fr .95fr; gap: 40px; padding-block: 62px clamp(300px, 36vw, 420px); }
+.hero-copy { display: grid; gap: 22px; align-content: start; min-width: 0; }
+.kicker { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.kicker .ar { font: 700 20px/1 var(--f-ar); color: var(--gold-lit); }
+.kicker .tag { font: 500 12px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; padding: 7px 10px; border: 1px solid var(--glass-line); border-radius: 999px; background: var(--glass); }
+.hero h1 { font-size: clamp(44px, 7vw, 86px); line-height: .96; font-weight: 800; letter-spacing: -0.03em; }
+.hero h1 .w1, .hero h1 .w2, .hero h1 .w3 { display: inline-block; animation: wordIn .9s cubic-bezier(.2,.8,.2,1) both; }
+.hero h1 .w2 { animation-delay: .12s; } .hero h1 .w3 { animation-delay: .24s; }
+@keyframes wordIn { from { opacity: 0; transform: translateY(40px) rotate(2deg); filter: blur(6px); } }
+.hero h1 .bad { position: relative; color: #FF8A7A; white-space: nowrap; }
+.hero h1 .bad::after { content: ""; position: absolute; left: -2%; right: -2%; top: 55%; height: .09em; background: #FF8A7A; transform-origin: left; animation: strike .9s .9s cubic-bezier(.6,.1,.2,1) both; }
+@keyframes strike { from { transform: scaleX(0); } }
+.hero .sub { font-size: 20px; color: rgba(255,255,255,.86); max-width: 54ch; }
+.catches { display: flex; align-items: center; gap: 12px; font: 500 15px/1 var(--f-mono); color: rgba(255,255,255,.8); }
+.catches .rot { position: relative; height: 22px; width: 280px; overflow: hidden; }
+.catches .rot span { position: absolute; inset: 0; color: var(--gold-lit); font-weight: 600; opacity: 0; transform: translateY(100%); animation: rot 9s infinite; }
+.catches .rot span:nth-child(2) { animation-delay: 3s; } .catches .rot span:nth-child(3) { animation-delay: 6s; }
+@keyframes rot { 0% { opacity: 0; transform: translateY(100%); } 5%, 30% { opacity: 1; transform: none; } 36%, 100% { opacity: 0; transform: translateY(-100%); } }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.float { position: absolute; z-index: 2; }
+.float > div { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--glass-line); border-radius: 14px; padding: 12px 14px; display: grid; gap: 3px; min-width: 190px; box-shadow: 0 18px 40px rgba(0,0,0,.25); animation: bob 6s ease-in-out infinite; }
+.float b { font: 600 13px/1.2 var(--f-mono); letter-spacing: .02em; }
+.float span { font-size: 13px; color: rgba(255,255,255,.8); }
+.float .bad-t { color: #FF9B8E; } .float .ok-t { color: #7FE3B7; }
+.f1 { right: 4%; top: 12%; } .f2 { right: 30%; top: 44%; } .f3 { right: 1%; top: 60%; }
+.f2 > div { animation-delay: -2s; } .f3 > div { animation-delay: -4s; }
+@keyframes bob { 50% { transform: translateY(-12px); } }
+.hero-fade { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--gold-lit), transparent); opacity: .6; }
+
+/* stat strip */
+.strip { position: relative; z-index: 3; margin-top: -64px; }
+.strip-grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: 0 30px 60px -24px var(--shadow); }
+.cell { background: var(--paper); padding: 22px 24px; display: grid; gap: 4px; align-content: center; }
+.cell b { font: 800 clamp(26px, 3vw, 38px)/1 var(--f-display); letter-spacing: -0.02em; }
+.cell span { font-size: 14px; color: var(--muted); }
+.cell b span { font: inherit; color: inherit; }
+.cell.count { background: linear-gradient(135deg, var(--ledger-soft), var(--paper)); }
+.cell.count b { color: var(--ledger); }
+.cell .small { font: 500 12.5px/1.4 var(--f-mono); color: var(--muted); }
+
+/* reveal */
+.rv { transition: opacity .75s ease, transform .75s cubic-bezier(.2,.7,.2,1); transition-delay: calc(var(--i, 0) * 80ms); }
+.rv.pre { opacity: 0; transform: translateY(30px); }
+.rv.pre.in { opacity: 1; transform: none; }
+
+/* ================= PROBLEM DEMO ================= */
+.demo { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; box-shadow: 0 30px 70px -30px var(--shadow); overflow: hidden; }
+.demo-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px; padding: 18px 22px; border-bottom: 1px solid var(--line); background: var(--paper-2); }
+.switch { display: inline-flex; padding: 4px; border-radius: 12px; background: var(--line); gap: 4px; }
+.switch button { font: 600 14px/1 var(--f-body); border: 0; background: transparent; color: var(--muted); padding: 11px 16px; border-radius: 9px; cursor: pointer; transition: background .2s, color .2s; }
+.switch button[aria-selected="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 2px 8px var(--shadow); }
+.switch button[aria-selected="true"].g { color: var(--ok); }
+.switch button[aria-selected="true"].r { color: var(--loss); }
+.meters { display: flex; gap: 22px; flex-wrap: wrap; }
+.meter { display: grid; gap: 2px; }
+.meter span { font: 500 11.5px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.meter b { font: 800 28px/1.1 var(--f-display); font-variant-numeric: tabular-nums; }
+.meter.l b { color: var(--loss); } .meter.s b { color: var(--ok); }
+.belt { position: relative; height: 260px; overflow: hidden; background: linear-gradient(180deg, var(--paper) 0%, var(--paper-2) 100%); }
+.rail { position: absolute; left: 0; right: 0; top: 78px; height: 46px; background: repeating-linear-gradient(90deg, var(--line) 0 18px, transparent 18px 36px); opacity: .6; border-block: 2px solid var(--line); }
+.gate { position: absolute; left: 55%; top: 22px; width: 74px; height: 170px; margin-left: -37px; display: grid; place-items: center; border-radius: 14px; background: var(--ok-soft); border: 2px solid var(--ok); color: var(--ok); transition: opacity .35s, transform .35s; z-index: 2; }
+.gate svg { width: 36px; height: 36px; animation: breathe 3s ease-in-out infinite; }
+.gate small { position: absolute; bottom: 8px; font: 600 10px/1 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; }
+.belt[data-mode="without"] .gate { opacity: 0; transform: scale(.8); }
+.tray { position: absolute; left: 55%; bottom: 14px; width: 210px; margin-left: -105px; text-align: center; font: 600 12px/1.2 var(--f-mono); color: var(--ok); border: 2px dashed var(--ok); border-radius: 12px; padding: 8px 6px; background: var(--ok-soft); transition: opacity .3s; }
+.belt[data-mode="without"] .tray { opacity: 0; }
+.drain { position: absolute; right: 10px; bottom: 12px; font: 600 12px/1.2 var(--f-mono); color: var(--loss); border: 2px dashed var(--loss); border-radius: 12px; padding: 8px 12px; background: var(--loss-soft); transition: opacity .3s; }
+.belt[data-mode="with"] .drain { opacity: .35; }
+.bill { position: absolute; left: 0; top: 54px; width: 116px; padding: 8px 10px; border-radius: 10px; background: var(--paper); border: 1.5px solid var(--line); box-shadow: 0 6px 16px var(--shadow); font: 500 11px/1.3 var(--f-mono); z-index: 1; will-change: transform; }
+.bill b { display: block; font-weight: 600; font-size: 12px; }
+.bill i { font-style: normal; display: block; margin-top: 2px; color: var(--muted); }
+.bill.bad { border-color: var(--loss); } .bill.bad i { color: var(--loss); font-weight: 600; }
+.bill.good { border-color: var(--ok); }
+.bill.held { border-color: var(--ok); background: var(--ok-soft); }
+.bill.held i { color: var(--ok); }
+.pop { position: absolute; z-index: 3; font: 800 18px/1 var(--f-display); color: var(--loss); animation: popUp 1.4s ease-out forwards; pointer-events: none; }
+.pop.green { color: var(--ok); }
+@keyframes popUp { from { opacity: 1; transform: translateY(0) scale(.8); } to { opacity: 0; transform: translateY(-60px) scale(1.25); } }
+.leaks { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 26px; }
+.leak { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 20px 18px; display: grid; gap: 10px; align-content: start; transition: transform .25s, border-color .25s, box-shadow .25s; }
+.leak:hover { transform: translateY(-5px); border-color: var(--loss); box-shadow: 0 18px 34px -18px var(--shadow); }
+.leak svg { width: 38px; height: 38px; }
+.leak p { font-size: 15px; color: var(--muted); }
+.example { margin-top: 18px; display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: center; background: var(--paper); border: 1px dashed var(--loss); border-radius: 16px; padding: 20px 24px; }
+.example .big { font: 800 38px/1 var(--f-display); color: var(--loss); }
+.example p { color: var(--muted); }
+
+/* ================= WHY NOW ================= */
+.timeline { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; padding-top: 38px; }
+.timeline::before { content: ""; position: absolute; left: 0; right: 0; top: 12px; height: 4px; background: var(--line); border-radius: 4px; }
+.timeline .fill { position: absolute; left: 0; top: 12px; height: 4px; width: 0; border-radius: 4px; background: linear-gradient(90deg, var(--ledger), var(--gold)); transition: width 1.8s cubic-bezier(.2,.7,.2,1); }
+.timeline.in .fill { width: 36%; }
+.tl { position: relative; display: grid; gap: 6px; }
+.tl::before { content: ""; position: absolute; top: -35px; left: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--paper); border: 4px solid var(--ledger); }
+.tl.key::before { background: var(--gold); border-color: var(--gold); box-shadow: 0 0 0 7px rgba(183,121,31,.2); animation: ring 2.4s ease-in-out infinite; }
+@keyframes ring { 50% { box-shadow: 0 0 0 12px rgba(183,121,31,0); } }
+.tl .d { font: 600 14px/1.2 var(--f-mono); color: var(--ledger); }
+.tl p { font-size: 15px; color: var(--muted); }
+.statement { margin-top: 44px; padding: 34px 36px; border-radius: 22px; color: #fff; font: 700 clamp(22px, 3.2vw, 36px)/1.18 var(--f-display); text-wrap: balance; background: linear-gradient(120deg, var(--sky1), var(--sky2) 60%, var(--sky3)); position: relative; overflow: hidden; }
+.statement span { color: var(--gold-lit); }
+.statement::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.12) 48%, transparent 66%); transform: translateX(-100%); animation: sheen 6s ease-in-out infinite; }
+@keyframes sheen { 45%, 100% { transform: translateX(100%); } }
+.pens { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.pen { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; display: grid; gap: 4px; }
+.pen b { font: 800 26px/1.1 var(--f-display); }
+.pen span { font-size: 14px; color: var(--muted); }
+
+/* ================= HOW IT WORKS ================= */
+.how { display: grid; grid-template-columns: .9fr 1.1fr; gap: 28px; align-items: stretch; }
+.steps { display: grid; gap: 10px; align-content: start; }
+.stepbtn { text-align: left; font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; cursor: pointer; display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: start; position: relative; overflow: hidden; transition: border-color .25s, transform .25s, box-shadow .25s; }
+.stepbtn:hover { transform: translateX(4px); }
+.stepbtn .n { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--paper-2); font: 700 17px/1 var(--f-mono); color: var(--muted); transition: background .25s, color .25s; }
+.stepbtn p { font-size: 15px; color: var(--muted); margin-top: 3px; }
+.stepbtn[aria-selected="true"] { border-color: var(--ledger); box-shadow: 0 16px 36px -20px var(--shadow); }
+.stepbtn[aria-selected="true"] .n { background: var(--ledger); color: var(--paper); }
+.stepbtn .bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--gold); }
+.stepbtn[aria-selected="true"] .bar { animation: stepbar 4.5s linear forwards; }
+.autopaused .stepbtn[aria-selected="true"] .bar { animation: none; width: 100%; }
+@keyframes stepbar { to { width: 100%; } }
+.stage { position: relative; min-height: 400px; border-radius: 22px; background: linear-gradient(160deg, var(--sky1), var(--sky2) 70%, #5a3a73); padding: 26px; color: #fff; overflow: hidden; }
+.stage::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 80% 0%, rgba(255,168,107,.35), transparent 55%); }
+.pane { position: absolute; inset: 26px; display: grid; gap: 14px; align-content: start; opacity: 0; transform: translateY(18px) scale(.98); transition: opacity .5s ease, transform .5s ease; pointer-events: none; }
+.pane.on { opacity: 1; transform: none; pointer-events: auto; }
+.pane h3 { color: #fff; }
+.pane .cap { color: rgba(255,255,255,.75); font-size: 15px; }
+.doc { background: #fff; color: #101B2B; border-radius: 14px; padding: 16px 18px; display: grid; gap: 6px; font: 500 13px/1.4 var(--f-mono); box-shadow: 0 24px 40px rgba(0,0,0,.3); position: relative; overflow: hidden; }
+.doc .r { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px dashed #cfd8e3; padding-bottom: 5px; }
+.doc .r:last-child { border-bottom: 0; }
+.doc b { font-weight: 600; }
+.scan { position: absolute; left: 0; right: 0; height: 36px; top: -36px; background: linear-gradient(180deg, transparent, rgba(27,78,150,.35), transparent); animation: scan 2.4s ease-in-out infinite; }
+@keyframes scan { to { top: 100%; } }
+.hl { background: #fff0b8; border-radius: 4px; padding: 0 4px; animation: hlIn .5s both; }
+.pane.on .hl:nth-of-type(2) { animation-delay: .5s; } .pane.on .hl:nth-of-type(3) { animation-delay: 1s; }
+@keyframes hlIn { from { background: transparent; } }
+.chk { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font: 500 14px/1.3 var(--f-mono); }
+.chk li { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); border-radius: 10px; padding: 9px 12px; opacity: 0; transform: translateX(-12px); }
+.pane.on .chk li { animation: chkIn .45s forwards; }
+.pane.on .chk li:nth-child(2) { animation-delay: .35s; } .pane.on .chk li:nth-child(3) { animation-delay: .7s; } .pane.on .chk li:nth-child(4) { animation-delay: 1.05s; }
+@keyframes chkIn { to { opacity: 1; transform: none; } }
+.chk .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: #2BB583; color: #04281c; }
+.chk .x .ic { background: #FF7A69; color: #3a0a05; }
+.chk em { font-style: normal; font-size: 12px; opacity: .8; }
+.act { display: flex; flex-wrap: wrap; gap: 8px; }
+.act span { padding: 10px 14px; border-radius: 10px; font: 600 13.5px/1 var(--f-body); border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.1); }
+.act .go { background: #2BB583; color: #04281c; border-color: transparent; }
+.mail { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 12px 14px; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,.9); }
+.mail b { color: var(--gold-lit); font-weight: 600; }
+
+/* modules */
+.mods { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-top: 26px; }
+.mod { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 20px 18px; display: grid; gap: 10px; align-content: start; transition: transform .25s, box-shadow .25s; }
+.mod:hover { transform: translateY(-5px); box-shadow: 0 18px 34px -18px var(--shadow); }
+.mod.mvp { border-color: var(--ledger); }
+.badge { justify-self: start; font: 600 11px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; padding: 5px 8px; border-radius: 6px; background: var(--paper-2); color: var(--muted); }
+.mod.mvp .badge { background: var(--ledger); color: var(--paper); }
+.mod p { font-size: 15px; color: var(--muted); }
+.never { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { font-size: 14px; padding: 9px 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); }
+.chip b { color: var(--loss); margin-right: 4px; }
+
+/* ================= MONEY ================= */
+.plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.plan { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: grid; gap: 6px; align-content: start; transition: transform .25s, box-shadow .25s; }
+.plan:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -20px var(--shadow); }
+.plan.best { border: 2px solid var(--ledger); position: relative; }
+.plan.best::before { content: "Most popular"; position: absolute; top: -12px; left: 18px; font: 600 11px/1 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; background: var(--ledger); color: var(--paper); padding: 6px 9px; border-radius: 6px; }
+.pname { font: 600 13px/1 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.price { font: 800 32px/1.1 var(--f-display); letter-spacing: -0.02em; }
+.price small { font: 500 14px/1 var(--f-body); color: var(--muted); letter-spacing: 0; }
+.plan p { font-size: 14.5px; color: var(--muted); }
+.calc { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; background: var(--paper); border: 1px solid var(--line); border-radius: 24px; overflow: hidden; box-shadow: 0 30px 70px -34px var(--shadow); }
+.calc-in { padding: 30px; display: grid; gap: 20px; border-right: 1px solid var(--line); align-content: start; }
+.field { display: grid; gap: 8px; }
+.field label { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; font-weight: 500; }
+.field output { font: 600 14px/1.4 var(--f-mono); color: var(--ledger); }
+input[type="range"] { width: 100%; accent-color: var(--ledger); height: 28px; }
+.calc-out { padding: 30px; display: grid; gap: 14px; align-content: start; background: var(--paper-2); }
+.row { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; padding-bottom: 8px; border-bottom: 1px dashed var(--line); }
+.row span:last-child { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.roi { display: grid; gap: 4px; margin-top: 4px; }
+.roi b { font: 800 68px/1 var(--f-display); color: var(--ok); font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.roi span { color: var(--muted); font-size: 14px; }
+.bars { margin-top: 24px; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 26px; display: grid; gap: 16px; }
+.bar { display: grid; grid-template-columns: 70px 1fr 130px; gap: 14px; align-items: center; font-size: 15px; }
+.track { height: 28px; background: var(--paper-2); border-radius: 9px; overflow: hidden; }
+.fill2 { height: 100%; width: 0; background: linear-gradient(90deg, var(--ledger), #4D86D6); border-radius: 9px; transition: width 1.5s cubic-bezier(.2,.7,.2,1); }
+.bars.in .fill2 { width: var(--w); }
+.bar .v { font: 600 15px/1.1 var(--f-mono); text-align: right; }
+.bar small { color: var(--muted); display: block; font-size: 12.5px; }
+
+/* ================= CUSTOMERS ================= */
+.cust { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+.panel { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 26px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.panel ul { margin: 0; padding-left: 18px; display: grid; gap: 7px; color: var(--muted); }
+.panel ul b { color: var(--ink); font-weight: 600; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.role { display: grid; grid-template-columns: 92px 1fr; gap: 12px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+.role:last-child { border-bottom: 0; }
+.role b { font: 600 13px/1.4 var(--f-mono); color: var(--ledger); text-transform: uppercase; letter-spacing: .05em; }
+.role em { display: block; font-style: normal; color: var(--muted); font-size: 14px; }
+
+/* ================= TECH ================= */
+.arch { display: grid; grid-template-columns: 1fr 52px 1.3fr 52px 1fr; gap: 0; align-items: stretch; }
+.col { display: grid; gap: 10px; align-content: center; min-width: 0; }
+.col .h { font: 600 12px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.box { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 2px; }
+.box b { font-weight: 600; font-size: 15px; }
+.box span { font-size: 13.5px; color: var(--muted); }
+.core { background: var(--ledger-soft); border: 2px solid var(--ledger); border-radius: 20px; padding: 16px; display: grid; gap: 10px; }
+.core .h { color: var(--ledger); }
+.core .box { transition: background .3s, border-color .3s, transform .3s; animation: stage 8s infinite; }
+.core .box:nth-of-type(2) { animation-delay: 2s; } .core .box:nth-of-type(3) { animation-delay: 4s; } .core .box:nth-of-type(4) { animation-delay: 6s; }
+@keyframes stage { 0%, 22% { background: var(--ledger); border-color: var(--ledger); transform: scale(1.02); } 26%, 100% { background: var(--paper); border-color: var(--line); transform: none; } }
+.core .box:nth-of-type(1) b, .core .box:nth-of-type(1) span { animation: txt 8s infinite; }
+.core .box:nth-of-type(2) b, .core .box:nth-of-type(2) span { animation: txt 8s 2s infinite; }
+.core .box:nth-of-type(3) b, .core .box:nth-of-type(3) span { animation: txt 8s 4s infinite; }
+.core .box:nth-of-type(4) b, .core .box:nth-of-type(4) span { animation: txt 8s 6s infinite; }
+@keyframes txt { 0%, 22% { color: var(--paper); } 26%, 100% { color: inherit; } }
+.pipe { position: relative; align-self: center; height: 4px; margin-inline: 6px; border-radius: 4px; background: var(--line); overflow: hidden; }
+.pipe::after { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, var(--gold), transparent); animation: flow 1.8s linear infinite; }
+@keyframes flow { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+.built { margin-top: 18px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; }
+.built b { margin-right: 6px; }
+.trio { margin-top: 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+/* compare + roadmap + faq */
+.tbl { overflow-x: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; }
+table { width: 100%; border-collapse: collapse; min-width: 700px; font-size: 15px; }
+th, td { padding: 14px 16px; text-align: center; border-bottom: 1px solid var(--line); }
+th { font: 600 12px/1.2 var(--f-mono); text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--paper-2); }
+td:first-child, th:first-child { text-align: left; font-weight: 600; }
+tr:last-child td { border-bottom: 0; }
+tr.us td { background: var(--ledger-soft); } tr.us td:first-child { color: var(--ledger); }
+.y { color: var(--ok); font-weight: 700; } .n { color: var(--loss); font-weight: 700; } .p { color: var(--muted); }
+.road { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; position: relative; }
+.phase { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: grid; gap: 8px; align-content: start; position: relative; transition: transform .25s; }
+.phase:hover { transform: translateY(-5px); }
+.phase.now { border: 2px solid var(--ledger); background: var(--ledger-soft); }
+.when { font: 500 13px/1 var(--f-mono); color: var(--muted); }
+.phase ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: 15px; }
+.gate2 { margin-top: 10px; font: 600 12.5px/1.3 var(--f-mono); color: var(--ok); background: var(--ok-soft); padding: 8px 10px; border-radius: 8px; }
+.here { position: absolute; top: -12px; left: 18px; font: 600 11px/1 var(--f-mono); background: var(--ledger); color: var(--paper); padding: 6px 9px; border-radius: 6px; letter-spacing: .06em; }
+.faq { display: grid; gap: 10px; }
+details { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; transition: border-color .2s; }
+details[open] { border-color: var(--ledger); }
+summary { cursor: pointer; padding: 18px 20px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font: 600 20px/1 var(--f-mono); color: var(--ledger); transition: transform .25s; }
+details[open] summary::after { transform: rotate(45deg); }
+details p { padding: 0 20px 18px; color: var(--muted); font-size: 15.5px; }
+
+/* ================= FOUNDER + CONTACT ================= */
+.finale { position: relative; isolation: isolate; margin-top: 110px; color: #fff; overflow: hidden; background: linear-gradient(180deg, var(--sky1) 0%, var(--sky2) 55%, var(--sky3) 100%); }
+.finale .sky { z-index: -1; }
+.finale .lyr svg { height: clamp(220px, 30vw, 340px); }
+.fin-in { padding-block: 84px clamp(220px, 26vw, 320px); display: grid; gap: 44px; }
+.fin-head { display: grid; gap: 14px; max-width: 760px; }
+.fin-head .eyebrow { color: var(--gold-lit); }
+.fin-head h2 { color: #fff; }
+.founder { display: grid; grid-template-columns: 340px 1fr; gap: 28px; align-items: stretch; }
+.id-card { background: var(--glass); backdrop-filter: blur(14px); border: 1px solid var(--glass-line); border-radius: 26px; padding: 28px; display: grid; gap: 16px; justify-items: start; align-content: start; box-shadow: 0 30px 60px rgba(0,0,0,.28); }
+.avatar { position: relative; width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center; font: 800 40px/1 var(--f-display); color: #2A1500; background: linear-gradient(135deg, var(--gold-lit), var(--sky4)); }
+.avatar::before, .avatar::after { content: ""; position: absolute; inset: -9px; border-radius: 50%; border: 2px solid var(--gold-lit); opacity: .6; animation: pulseRing 3s ease-out infinite; }
+.avatar::after { animation-delay: 1.5s; }
+@keyframes pulseRing { from { transform: scale(.9); opacity: .7; } to { transform: scale(1.3); opacity: 0; } }
+.id-card h3 { font-size: 28px; color: #fff; }
+.id-card .role-t { font: 500 13px/1.4 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--gold-lit); }
+.id-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+.id-stats div { background: rgba(255,255,255,.1); border-radius: 12px; padding: 12px; display: grid; gap: 2px; }
+.id-stats b { font: 800 24px/1 var(--f-display); color: var(--gold-lit); }
+.id-stats span { font-size: 12.5px; color: rgba(255,255,255,.8); }
+.story { display: grid; gap: 18px; align-content: start; }
+.story p { color: rgba(255,255,255,.88); font-size: 18px; max-width: 64ch; }
+.cred { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.cred div { background: var(--glass); border: 1px solid var(--glass-line); border-radius: 16px; padding: 16px 18px; display: grid; gap: 4px; transition: transform .25s, background .25s; }
+.cred div:hover { transform: translateY(-4px); background: rgba(255,255,255,.18); }
+.cred b { font: 700 16px/1.25 var(--f-display); color: #fff; }
+.cred span { font-size: 14px; color: rgba(255,255,255,.78); }
+.contact { background: rgba(10,16,48,.55); backdrop-filter: blur(14px); border: 1px solid var(--glass-line); border-radius: 26px; padding: 30px; display: grid; gap: 18px; }
+.contact h3 { font-size: 26px; color: #fff; }
+.who { display: flex; flex-wrap: wrap; gap: 8px; }
+.who button { font: 600 14px/1 var(--f-body); color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: 11px 16px; cursor: pointer; transition: background .2s, transform .2s; }
+.who button:hover { transform: translateY(-2px); }
+.who button[aria-pressed="true"] { background: var(--gold-lit); color: #2A1500; border-color: transparent; }
+.msg { font: 400 15.5px/1.6 var(--f-body); color: rgba(255,255,255,.92); background: rgba(255,255,255,.08); border: 1px dashed rgba(255,255,255,.35); border-radius: 14px; padding: 16px 18px; min-height: 108px; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.details { display: grid; gap: 8px; font: 500 14.5px/1.4 var(--f-mono); color: rgba(255,255,255,.9); }
+.details span { display: inline-flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.details button { font: 600 12px/1 var(--f-mono); color: var(--gold-lit); background: transparent; border: 1px solid rgba(255,210,122,.5); border-radius: 8px; padding: 6px 9px; cursor: pointer; }
+.copied { font: 600 13px/1 var(--f-mono); color: var(--gold-lit); opacity: 0; transition: opacity .25s; }
+.copied.show { opacity: 1; }
+footer { padding-block: 40px 44px; color: var(--muted); font-size: 14px; display: grid; gap: 12px; }
+footer ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001s !important; animation-iteration-count: 1 !important; transition-duration: .001s !important; }
+  html { scroll-behavior: auto; }
+}
+
+@media (max-width: 1180px) {
+  .nav-links { display: none; }
+  .nav .btn { margin-left: auto; }
+}
+@media (max-width: 1000px) {
+  .hero-in, .how, .cust, .calc, .founder { grid-template-columns: 1fr; }
+  .float { display: none; }
+  .nav-links { display: none; }
+  .nav .btn { margin-left: auto; }
+  .strip-grid { grid-template-columns: 1fr 1fr; }
+  .leaks, .mods { grid-template-columns: repeat(2, 1fr); }
+  .plans, .road { grid-template-columns: repeat(2, 1fr); }
+  .calc-in { border-right: 0; border-bottom: 1px solid var(--line); }
+  .arch { grid-template-columns: 1fr; gap: 14px; }
+  .pipe { width: 4px; height: 36px; justify-self: center; margin: 0; }
+  .pipe::after { width: 100%; height: 40%; background: linear-gradient(180deg, transparent, var(--gold), transparent); animation: flowv 1.8s linear infinite; }
+  @keyframes flowv { from { transform: translateY(-100%); } to { transform: translateY(260%); } }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .sec { padding-block: 70px 0; }
+  .strip-grid, .leaks, .mods, .plans, .road, .pens, .trio, .cred, .timeline { grid-template-columns: 1fr; }
+  .timeline::before, .timeline .fill { display: none; }
+  .tl { padding-left: 34px; } .tl::before { top: 2px; }
+  .example { grid-template-columns: 1fr; }
+  .bar { grid-template-columns: 54px 1fr 100px; gap: 10px; }
+  .stage { min-height: 470px; }
+  .belt { height: 240px; }
+  .meter b { font-size: 22px; }
+  .contact, .id-card { padding: 22px; }
+  .catches .rot { width: 200px; }
+}
+</style>
+
+<div class="progress" id="progress"></div>
+
+<nav class="nav" aria-label="Main">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Invoice Guard, back to top">
+      <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L25 6.5 V14 C25 20.5 20 25 14 26.5 C8 25 3 20.5 3 14 V6.5 Z" fill="#FFD27A"/><path d="M9 14 L12.6 17.6 L19.2 10.6" fill="none" stroke="#0A1030" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Invoice Guard
+    </a>
+    <div class="nav-links" id="navlinks">
+      <a href="#problem">The problem</a>
+      <a href="#why-now">Why now</a>
+      <a href="#how">How it works</a>
+      <a href="#money">Pricing and ROI</a>
+      <a href="#tech">Technology</a>
+      <a href="#founder">Founder</a>
+    </div>
+    <a class="btn btn-gold" href="#contact">Get in touch</a>
+  </div>
+</nav>
+
+<main id="top">
+  <!-- ================= HERO ================= -->
+  <header class="hero" id="hero">
+    <div class="sky" aria-hidden="true">
+      <div class="stars" id="stars"></div>
+      <div class="sun"></div>
+      <div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div>
+      <div class="plane"></div>
+      <div class="lyr" data-d="0.05"><svg id="sk-far" preserveAspectRatio="xMidYMax slice"></svg></div>
+      <div class="lyr" data-d="0.10"><svg id="sk-mid" preserveAspectRatio="xMidYMax slice"></svg></div>
+      <div class="lyr" data-d="0.18"><svg id="sk-near" preserveAspectRatio="xMidYMax slice"></svg></div>
+      <div class="shade"></div>
+    </div>
+
+    <div class="wrap hero-in">
+      <div class="hero-copy">
+        <div class="kicker"><span class="ar" lang="ar" dir="rtl">حارس الفواتير</span><span class="tag">Made for the UAE</span></div>
+        <h1><span class="w1">Stop paying</span> <span class="w2">for</span> <span class="w3 bad">wrong bills.</span></h1>
+        <p class="sub">Invoice Guard checks every supplier bill against the purchase order, the contract and UAE VAT rules before you pay. It also tracks which suppliers are ready for mandatory e-invoicing.</p>
+        <div class="catches" aria-hidden="true"><span>Catches</span><div class="rot"><span>duplicate bills</span><span>prices above the contract</span><span>VAT you cannot reclaim</span></div></div>
+        <div class="cta">
+          <a class="btn btn-gold" href="#problem">Watch it work</a>
+          <a class="btn btn-line" href="#money">See the numbers</a>
+        </div>
+      </div>
+      <div></div>
+
+      <div class="float f1" data-d="0.5"><div><b class="bad-t">INV1045 · duplicate</b><span>Same as INV-1045, AED 52,500</span></div></div>
+      <div class="float f2" data-d="0.8"><div><b class="bad-t">AED 11.00 vs AED 10.00</b><span>Price above the contract</span></div></div>
+      <div class="float f3" data-d="0.35"><div><b class="ok-t">TRN valid · VAT 5% correct</b><span>Cleared for payment</span></div></div>
+    </div>
+    <div class="hero-fade"></div>
+  </header>
+
+  <!-- stat strip -->
+  <section class="strip">
+    <div class="wrap">
+      <div class="strip-grid rv">
+        <div class="cell count"><span class="small">UAE e-invoicing goes live for large firms in</span><b class="num"><span id="days1">0</span> days</b><span class="small" id="days2txt">All other businesses in 0 days</span></div>
+        <div class="cell"><b class="num">AED 5,000</b><span>penalty per month for not complying</span></div>
+        <div class="cell"><b class="num">5% / 15%</b><span>VAT at stake in the UAE / Saudi Arabia</span></div>
+        <div class="cell"><b class="num">0</b><span>checks e-invoicing makes on price</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROBLEM ================= -->
+  <section class="sec" id="problem">
+    <div class="wrap">
+      <div class="head rv">
+        <div class="eyebrow">The problem</div>
+        <h2>Companies pay wrong supplier bills every month, and rarely find out.</h2>
+        <p class="lead">Nobody can check thousands of bills against contracts, orders and VAT rules by hand. Watch what happens with and without a guard on the line.</p>
+      </div>
+
+      <div class="demo rv" id="demo">
+        <div class="demo-top">
+          <div class="switch" role="tablist" aria-label="Simulation mode">
+            <button type="button" role="tab" class="r" id="m-without" aria-selected="true">Without Invoice Guard</button>
+            <button type="button" role="tab" class="g" id="m-with" aria-selected="false">With Invoice Guard</button>
+          </div>
+          <div class="meters" aria-live="polite">
+            <div class="meter l"><span>Money lost</span><b id="lostv">AED 0</b></div>
+            <div class="meter s"><span>Stopped before payment</span><b id="savedv">AED 0</b></div>
+          </div>
+        </div>
+        <div class="belt" id="belt" data-mode="without">
+          <div class="rail"></div>
+          <div class="gate"><svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L25 6.5 V14 C25 20.5 20 25 14 26.5 C8 25 3 20.5 3 14 V6.5 Z" fill="currentColor" fill-opacity=".18" stroke="currentColor" stroke-width="2"/><path d="M9 14 L12.6 17.6 L19.2 10.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><small>Guard</small></div>
+          <div class="tray">Held for review</div>
+          <div class="drain">Paid out</div>
+        </div>
+        <p class="note" style="padding:12px 22px 16px">Illustrative simulation with made-up amounts. Duplicates lose the full bill, overcharges about 10%, and invalid invoices the 5% VAT.</p>
+      </div>
+
+      <div class="leaks">
+        <div class="leak rv" style="--i:0">
+          <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="4" y="6" width="17" height="22" rx="3" fill="none" stroke="var(--loss)" stroke-width="2"/><rect x="13" y="3" width="17" height="22" rx="3" fill="var(--paper)" stroke="var(--loss)" stroke-width="2"/><path d="M17 10h9M17 15h9M17 20h6" stroke="var(--loss)" stroke-width="2" stroke-linecap="round"/></svg>
+          <h3>Duplicates</h3><p>The same bill arrives twice with a slightly changed number. Both get paid.</p>
+        </div>
+        <div class="leak rv" style="--i:1">
+          <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M5 26 L13 18 L19 22 L29 9" fill="none" stroke="var(--loss)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 9h7v7" fill="none" stroke="var(--loss)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3>Overcharges</h3><p>The price on the bill is higher than the contract or purchase order.</p>
+        </div>
+        <div class="leak rv" style="--i:2">
+          <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M4 11 L17 5 L30 11 V24 L17 30 L4 24 Z" fill="none" stroke="var(--loss)" stroke-width="2" stroke-linejoin="round"/><path d="M4 11 L17 17 L30 11 M17 17 V30" fill="none" stroke="var(--loss)" stroke-width="2"/></svg>
+          <h3>Not delivered</h3><p>Bills are paid before anyone checks what actually arrived.</p>
+        </div>
+        <div class="leak rv" style="--i:3">
+          <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="12" fill="none" stroke="var(--loss)" stroke-width="2"/><path d="M12 17h10" stroke="var(--loss)" stroke-width="2.4" stroke-linecap="round"/></svg>
+          <h3>Missed credits</h3><p>Credit notes and volume rebates are promised but never applied.</p>
+        </div>
+        <div class="leak rv" style="--i:4">
+          <svg viewBox="0 0 34 34" aria-hidden="true"><rect x="6" y="4" width="22" height="26" rx="3" fill="none" stroke="var(--loss)" stroke-width="2"/><path d="M11 11h12M11 16h7" stroke="var(--loss)" stroke-width="2" stroke-linecap="round"/><path d="M13 22 l8 6 M21 22 l-8 6" stroke="var(--loss)" stroke-width="2.4" stroke-linecap="round"/></svg>
+          <h3>Lost VAT</h3><p>A missing or wrong supplier TRN can cost the buyer its input VAT refund.</p>
+        </div>
+      </div>
+      <div class="example rv">
+        <div class="big num">AED 73,500</div>
+        <p>One example clinic group paid a AED 52,500 glove bill twice (email and scan), then AED 11 a box against a contracted AED 10 on 20,000 boxes. Nobody noticed until the year-end audit. <em>Illustrative example.</em></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WHY NOW ================= -->
+  <section class="sec" id="why-now">
+    <div class="wrap">
+      <div class="head rv">
+        <div class="eyebrow">Why now</div>
+        <h2>The UAE is changing how every B2B invoice works, on a fixed deadline.</h2>
+        <p class="lead">Ministerial Decisions 243 and 244 of 2025 require invoices to travel as structured data through accredited providers on the Peppol network.</p>
+      </div>
+      <div class="timeline rv" id="timeline">
+        <div class="fill"></div>
+        <div class="tl"><span class="d">1 Jan 2026</span><p>Stricter UAE VAT rules: a claim can be refused if the buyer should have known.</p></div>
+        <div class="tl"><span class="d">30 Oct 2026</span><p>Large firms must appoint an accredited e-invoicing provider.</p></div>
+        <div class="tl key"><span class="d">1 Jan 2027</span><p>E-invoicing goes live for companies with AED 50m+ revenue.</p></div>
+        <div class="tl"><span class="d">1 Jul 2027</span><p>All other businesses go live.</p></div>
+      </div>
+      <div class="statement rv">E-invoicing checks that a bill is correctly formatted. <span>It does not check that the bill is correct.</span></div>
+      <div class="pens">
+        <div class="pen rv" style="--i:0"><b class="num">AED 5,000</b><span>a month for not implementing, up to AED 50,000 a year</span></div>
+        <div class="pen rv" style="--i:1"><b class="num">AED 100</b><span>per late invoice or credit note, capped at AED 5,000 a month</span></div>
+        <div class="pen rv" style="--i:2"><b class="num">2 days</b><span>to report an e-invoicing system failure to the FTA</span></div>
+      </div>
+      <p class="note" style="margin-top:12px">Dates and penalties come from adviser summaries of the official decisions (Cabinet Decision 173 of 2026). Confirm on mof.gov.ae before relying on them.</p>
+    </div>
+  </section>
+
+  <!-- ================= HOW IT WORKS ================= -->
+  <section class="sec" id="how">
+    <div class="wrap">
+      <div class="head rv">
+        <div class="eyebrow">How it works</div>
+        <h2>Four steps between a bill arriving and a bill being paid.</h2>
+        <p class="lead">Click a step, or let it play. A person always makes the final call.</p>
+      </div>
+      <div class="how rv" id="how-box">
+        <div class="steps" role="tablist" aria-label="Steps">
+          <button class="stepbtn" role="tab" type="button" aria-selected="true" data-s="0"><span class="n">1</span><span><h3>A bill arrives</h3><p>From your ERP, your e-invoicing provider, or an email inbox.</p></span><i class="bar"></i></button>
+          <button class="stepbtn" role="tab" type="button" aria-selected="false" data-s="1"><span class="n">2</span><span><h3>AI reads it</h3><p>Matches the bill to its purchase order, delivery and contract, in Arabic or English.</p></span><i class="bar"></i></button>
+          <button class="stepbtn" role="tab" type="button" aria-selected="false" data-s="2"><span class="n">3</span><span><h3>Rules check it</h3><p>Mandatory fields, TRN, VAT maths, duplicates and price.</p></span><i class="bar"></i></button>
+          <button class="stepbtn" role="tab" type="button" aria-selected="false" data-s="3"><span class="n">4</span><span><h3>You decide</h3><p>Approve, hold, or send the drafted email to the supplier.</p></span><i class="bar"></i></button>
+        </div>
+        <div class="stage" aria-live="polite">
+          <div class="pane on" data-p="0">
+            <h3>Bill arrives</h3>
+            <div class="doc"><div class="r"><b>INV1045</b><span>scanned copy</span></div><div class="r"><span>Supplier</span><span>Gulf Medical Supplies LLC</span></div><div class="r"><span>Nitrile gloves × 20,000</span><span>AED 11.00</span></div><div class="r"><span>VAT 5%</span><span>AED 11,000</span></div><div class="r"><b>Total</b><b>AED 231,000</b></div></div>
+            <p class="cap">PDF, scan or structured e-invoice. All sources land in one place.</p>
+          </div>
+          <div class="pane" data-p="1">
+            <h3>AI reads it</h3>
+            <div class="doc"><i class="scan"></i><div class="r"><b>INV1045</b><span class="hl">Invoice no.</span></div><div class="r"><span>Supplier</span><span class="hl">Gulf Medical Supplies LLC</span></div><div class="r"><span>Unit price</span><span class="hl">AED 11.00</span></div><div class="r"><span>Contract price found</span><span>AED 10.00</span></div><div class="r"><span>PO and delivery</span><span>matched</span></div></div>
+            <p class="cap">Fields, contract terms and delivery records are pulled out and linked.</p>
+          </div>
+          <div class="pane" data-p="2">
+            <h3>Rules check it</h3>
+            <ul class="chk"><li><span class="ic">✓</span><span>Supplier TRN is valid</span><em>format</em></li><li><span class="ic">✓</span><span>VAT 5% maths is correct</span><em>AED 11,000</em></li><li class="x"><span class="ic">!</span><span>Same as INV-1045, paid 3 Mar</span><em>duplicate</em></li><li class="x"><span class="ic">!</span><span>AED 11.00 against contract AED 10.00</span><em>overcharge</em></li></ul>
+            <p class="cap">Same rules, same answer, every time, with a full audit log.</p>
+          </div>
+          <div class="pane" data-p="3">
+            <h3>You decide</h3>
+            <div class="mail"><b>Draft to supplier:</b> Dear team, invoice INV1045 duplicates INV-1045 (paid 3 March) and bills AED 11.00 against the contracted AED 10.00. Please issue a credit note for AED 20,000 plus VAT.</div>
+            <div class="act"><span class="go">Approve draft</span><span>Edit</span><span>Release payment</span><span>Hold bill</span></div>
+            <p class="cap">Nothing is held, sent or paid without a person's approval.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mods">
+        <div class="mod mvp rv" style="--i:0"><span class="badge">First release</span><h3>Supplier readiness</h3><p>Which suppliers are e-invoicing ready, who is at risk, automatic reminders.</p></div>
+        <div class="mod mvp rv" style="--i:1"><span class="badge">First release</span><h3>Invoice checker</h3><p>Fields, TRN, VAT maths, duplicates, price against PO and contract.</p></div>
+        <div class="mod rv" style="--i:2"><span class="badge">Next</span><h3>AI document reader</h3><p>Reads PDFs, scans and contracts in Arabic and English.</p></div>
+        <div class="mod rv" style="--i:3"><span class="badge">Next</span><h3>Exceptions dashboard</h3><p>Money at risk, bills on hold, penalty exposure, savings to date.</p></div>
+        <div class="mod rv" style="--i:4"><span class="badge">Later</span><h3>Look-back audit</h3><p>Checks 1 to 3 years of past payments and drafts supplier claims.</p></div>
+      </div>
+      <div class="never rv">
+        <span class="chip"><b>✗</b>Not an e-invoicing provider: it works with yours</span>
+        <span class="chip"><b>✗</b>No tax advice or filing: grey areas are flagged for review</span>
+        <span class="chip"><b>✗</b>No payments or disputes without a person</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MONEY ================= -->
+  <section class="sec" id="money">
+    <div class="wrap">
+      <div class="head rv">
+        <div class="eyebrow">Pricing and return</div>
+        <h2>A monthly subscription that should return 5 to 10 times its cost.</h2>
+        <p class="lead">Priced by invoice volume, with optional look-back audits paid from money recovered. All figures are starting assumptions to test with real customers.</p>
+      </div>
+      <div class="plans">
+        <div class="plan rv" style="--i:0"><span class="pname">Starter</span><span class="price num">AED 1,500<small> /month</small></span><p>Up to 500 bills a month</p></div>
+        <div class="plan best rv" style="--i:1"><span class="pname">Growth</span><span class="price num">AED 3,000<small> /month</small></span><p>Up to 2,000 bills a month</p></div>
+        <div class="plan rv" style="--i:2"><span class="pname">Business</span><span class="price num">AED 6,000+<small> /month</small></span><p>2,000+ bills, several companies</p></div>
+        <div class="plan rv" style="--i:3"><span class="pname">Look-back audit</span><span class="price num">20 to 30%<small> of recovered</small></span><p>1 to 3 years of past payments</p></div>
+      </div>
+
+      <div class="calc rv">
+        <div class="calc-in">
+          <h3>Try the numbers for one company</h3>
+          <div class="field"><label for="spend">Supplier spend a year <output id="spend-o" class="num">AED 150m</output></label><input type="range" id="spend" min="20" max="1000" step="10" value="150"></div>
+          <div class="field"><label for="leak">Overpayments caught <output id="leak-o" class="num">0.10%</output></label><input type="range" id="leak" min="0.02" max="0.5" step="0.01" value="0.1"></div>
+          <div class="field"><label for="vat">Invalid invoices found a year <output id="vat-o" class="num">AED 2.0m</output></label><input type="range" id="vat" min="0" max="10" step="0.5" value="2"></div>
+          <div class="field"><label for="bills">Bills a month <output id="bills-o" class="num">1,500</output></label><input type="range" id="bills" min="100" max="6000" step="100" value="1500"></div>
+        </div>
+        <div class="calc-out" aria-live="polite">
+          <div class="row"><span>Overpayments stopped</span><span id="r-leak" class="num"></span></div>
+          <div class="row"><span>VAT protected (5%)</span><span id="r-vat" class="num"></span></div>
+          <div class="row"><span>AP time saved</span><span id="r-time" class="num"></span></div>
+          <div class="row"><span><b>Total value a year</b></span><span id="r-total" class="num"></span></div>
+          <div class="row"><span>Invoice Guard fee a year</span><span id="r-fee" class="num"></span></div>
+          <div class="roi"><b id="r-roi">10×</b><span>return on the subscription, using the assumptions on the left</span></div>
+        </div>
+      </div>
+
+      <div class="bars rv" id="bars">
+        <h3>Revenue if it works (illustration)</h3>
+        <div class="bar"><span class="mono">Year 1</span><div class="track"><div class="fill2" style="--w:4.4%"></div></div><span class="v num">AED 0.24m<small>10 customers</small></span></div>
+        <div class="bar"><span class="mono">Year 2</span><div class="track"><div class="fill2" style="--w:27.8%"></div></div><span class="v num">AED 1.5m<small>50 customers</small></span></div>
+        <div class="bar"><span class="mono">Year 3</span><div class="track"><div class="fill2" style="--w:100%"></div></div><span class="v num">AED 5.4m<small>150 customers</small></span></div>
+        <p class="note">Bars drawn to scale. Assumes an average of AED 2,000 to 3,000 a month per customer.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CUSTOMERS ================= -->
+  <section class="sec" id="customers">
+    <div class="wrap">
+      <div class="head rv">
+        <div class="eyebrow">Who it is for</div>
+        <h2>Mid-size UAE companies with many suppliers, and the accounting firms that serve them.</h2>
+      </div>
+      <div class="cust">
+        <div class="panel rv">
+          <h3>Ideal customer</h3>
+          <ul>
+            <li><b>AED 50m to 500m</b> revenue, first in line for e-invoicing</li>
+            <li><b>200+ suppliers</b> and <b>1,000+ bills</b> a month</li>
+            <li>On lighter systems: Zoho, Odoo, Tally, Dynamics or Excel</li>
+            <li><b>Accounting firms</b>: one firm can serve 20 to 100 clients</li>
+          </ul>
+          <div class="chips"><span class="chip">Healthcare</span><span class="chip">Contracting</span><span class="chip">Facility management</span><span class="chip">Hospitality</span><span class="chip">FMCG and retail</span><span class="chip">Logistics</span></div>
+        </div>
+        <div class="panel rv" style="--i:1">
+          <h3>Who is who</h3>
+          <div class="role"><b>Buyer</b><span>CFO or finance manager<em>Money saved, audit risk, deadlines</em></span></div>
+          <div class="role"><b>User</b><span>Accounts payable team<em>Fewer manual checks, clear exceptions</em></span></div>
+          <div class="role"><b>Influencer</b><span>Auditor or VAT adviser<em>Clean, logged evidence</em></span></div>
+        </div>
+      </div>
+      <div class="tbl rv" style="margin-top:22px">
+        <table>
+          <thead><tr><th>Option today</th><th>Format check</th><th>Is the bill right?</th><th>Every bill</th><th>Before payment</th><th>Reads contracts</th></tr></thead>
+          <tbody>
+            <tr><td>AP team by hand</td><td class="p">Partly</td><td class="p">Partly</td><td class="n">✗</td><td class="y">✓</td><td class="p">Partly</td></tr>
+            <tr><td>ERP (SAP, Odoo, Zoho, Tally)</td><td class="y">✓</td><td class="p">Exact matches</td><td class="y">✓</td><td class="y">✓</td><td class="n">✗</td></tr>
+            <tr><td>E-invoicing provider</td><td class="y">✓</td><td class="n">✗</td><td class="y">✓</td><td class="y">✓</td><td class="n">✗</td></tr>
+            <tr><td>VAT consultant review</td><td class="y">✓</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="y">✓</td></tr>
+            <tr><td>Recovery audit firm</td><td class="n">✗</td><td class="y">✓</td><td class="y">✓</td><td class="n">✗</td><td class="y">✓</td></tr>
+            <tr class="us"><td>Invoice Guard</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= TECH ================= -->
+  <section class="sec" id="tech">
+    <div class="wrap">
+      <div class="head rv">
+        <div class="eyebrow">Technology</div>
+        <h2>A secure platform on Azure in the UAE, built to work with what companies already use.</h2>
+      </div>
+      <div class="arch rv">
+        <div class="col">
+          <div class="h">Data in</div>
+          <div class="box"><b>ERP data</b><span>Zoho, Odoo, Tally, Dynamics</span></div>
+          <div class="box"><b>E-invoices</b><span>PINT AE files via the provider</span></div>
+          <div class="box"><b>Email and scans</b><span>PDFs in Arabic and English</span></div>
+          <div class="box"><b>Contracts and POs</b><span>Prices, terms, rebates</span></div>
+        </div>
+        <div class="pipe" aria-hidden="true"></div>
+        <div class="core">
+          <div class="h">Invoice Guard core</div>
+          <div class="box"><b>1. AI document reader</b><span>Extracts fields and contract terms</span></div>
+          <div class="box"><b>2. Rules engine</b><span>Mandatory fields, TRN, VAT maths</span></div>
+          <div class="box"><b>3. Matching engine</b><span>Duplicates, PO and contract price</span></div>
+          <div class="box"><b>4. Exceptions and approval</b><span>A person reviews and decides</span></div>
+        </div>
+        <div class="pipe" aria-hidden="true"></div>
+        <div class="col">
+          <div class="h">Results out</div>
+          <div class="box"><b>Web dashboard</b><span>Money at risk, savings</span></div>
+          <div class="box"><b>Supplier readiness</b><span>Status and reminders</span></div>
+          <div class="box"><b>Alerts</b><span>Bills held for review</span></div>
+          <div class="box"><b>Audit log</b><span>For auditors and advisers</span></div>
+        </div>
+      </div>
+      <div class="built rv"><b>Built with</b><span class="chip">ASP.NET Core (.NET)</span><span class="chip">Azure UAE North</span><span class="chip">Azure SQL</span><span class="chip">Blob storage</span><span class="chip">Azure AI Document Intelligence</span><span class="chip">LLM via API</span><span class="chip">Single sign-on</span><span class="chip">Full audit log</span></div>
+      <div class="trio">
+        <div class="panel rv" style="--i:0"><h3>AI does</h3><p class="note" style="font-size:15px">Reads documents, extracts contract terms, judges near-duplicates, drafts supplier emails.</p></div>
+        <div class="panel rv" style="--i:1"><h3>Rules do</h3><p class="note" style="font-size:15px">Mandatory fields, TRN format, VAT maths, price comparisons. Same answer every time.</p></div>
+        <div class="panel rv" style="--i:2"><h3>People do</h3><p class="note" style="font-size:15px">Every hold, dispute and payment decision. The software recommends; the finance team decides.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ROADMAP + FAQ ================= -->
+  <section class="sec" id="roadmap">
+    <div class="wrap">
+      <div class="head rv">
+        <div class="eyebrow">Roadmap</div>
+        <h2>Four phases, each unlocked only by real customer evidence.</h2>
+      </div>
+      <div class="road">
+        <div class="phase now rv" style="--i:0"><span class="here">WE ARE HERE</span><h3>0. Validate</h3><span class="when">Nov to Dec 2026</span><ul><li>10 AP interviews</li><li>3 free sample reviews</li><li>Company set-up</li></ul><span class="gate2">Gate: 3 real losses found</span></div>
+        <div class="phase rv" style="--i:1"><h3>1. First release</h3><span class="when">Jan to Mar 2027</span><ul><li>Readiness tracker</li><li>Invoice checker</li><li>CSV and PDF upload</li></ul><span class="gate2">Gate: 2 paying pilots</span></div>
+        <div class="phase rv" style="--i:2"><h3>2. Product</h3><span class="when">Apr to Sep 2027</span><ul><li>AI document reader</li><li>ERP and provider links</li><li>Exceptions dashboard</li></ul><span class="gate2">Gate: 15 paying customers</span></div>
+        <div class="phase rv" style="--i:3"><h3>3. Scale</h3><span class="when">Oct 2027 onward</span><ul><li>Look-back audits</li><li>Accounting firm channel</li><li>Saudi Arabia (ZATCA)</li></ul><span class="gate2">Goal: AED 1m+ a year</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="faq">
+    <div class="wrap">
+      <div class="head rv">
+        <div class="eyebrow">Questions</div>
+        <h2>What people ask first.</h2>
+      </div>
+      <div class="faq rv">
+        <details><summary>Do we have to replace our ERP or e-invoicing provider?</summary><p>No. Invoice Guard sits next to them. Your ERP still records and pays bills, and your provider still sends and receives e-invoices.</p></details>
+        <details><summary>Is this tax advice?</summary><p>No. It checks bills against official rules and flags problems. Grey areas such as blocked VAT are marked "needs review" for your tax adviser.</p></details>
+        <details><summary>Where is our data kept?</summary><p>On Azure in the UAE, encrypted, with each company's data separated and every check logged. E-invoice data must stay in the UAE.</p></details>
+        <details><summary>What if the rules or dates change again?</summary><p>Rules and dates are settings, not hard-coded, and updates are tracked against Ministry of Finance announcements.</p></details>
+        <details><summary>How long until we see results?</summary><p>A free sample review on a few months of bills shows what a first scan finds, usually within days of receiving the data.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOUNDER + CONTACT ================= -->
+  <section class="finale" id="founder">
+    <div class="sky" aria-hidden="true">
+      <div class="stars" id="stars2" style="height:70%"></div>
+      <div class="lyr" data-d="0.04"><svg id="fk-far" preserveAspectRatio="xMidYMax slice"></svg></div>
+      <div class="lyr" data-d="0.08"><svg id="fk-near" preserveAspectRatio="xMidYMax slice"></svg></div>
+    </div>
+    <div class="wrap fin-in">
+      <div class="fin-head rv">
+        <div class="eyebrow">The founder</div>
+        <h2>Built by an engineer who has spent five years inside UAE business systems.</h2>
+      </div>
+
+      <div class="founder">
+        <div class="id-card rv">
+          <div class="avatar" aria-hidden="true">SA</div>
+          <div><h3>Syed Affan Ali</h3><div class="role-t">Founder · Software engineer</div></div>
+          <div class="id-stats">
+            <div><b>5+</b><span>years in UAE enterprise systems</span></div>
+            <div><b>.NET</b><span>SQL Server · Azure</span></div>
+            <div><b>HR · Payroll</b><span>where people, pay and compliance meet</span></div>
+            <div><b>SaaS</b><span>multi-tenant, secure by design</span></div>
+          </div>
+        </div>
+        <div class="story rv" style="--i:1">
+          <p>Syed Affan Ali has spent more than five years building enterprise HR and payroll platforms for companies in the UAE. That is work where money, people and regulation meet, and where one wrong number becomes a real cost.</p>
+          <p>He is a full-stack engineer on .NET, SQL Server and Azure who designs secure multi-tenant software, and he has already built a working reconciliation foundation that compares what was agreed with what was billed. For Invoice Guard he has studied the UAE e-invoicing decisions, VAT rules, the competitor field and the economics, so the product starts from facts.</p>
+          <div class="cred">
+            <div><b>Lives the problem</b><span>Years of integrating finance and payroll data in UAE companies.</span></div>
+            <div><b>Ships real software</b><span>Secure, multi-tenant SaaS with audit trails and Azure deployment.</span></div>
+            <div><b>Reads the regulation</b><span>Ministerial Decisions 243 and 244, PINT AE, and UAE VAT rules.</span></div>
+            <div><b>Built for the UAE</b><span>Arabic and English documents, AED, local VAT and e-invoicing.</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="contact rv" id="contact">
+        <h3>Let's talk about your supplier bills</h3>
+        <p style="color:rgba(255,255,255,.8)">Pick what describes you. A ready-made introduction appears below. Copy it and send it on LinkedIn.</p>
+        <div class="who" id="who" role="group" aria-label="I am a">
+          <button type="button" aria-pressed="true" data-r="finance">Finance leader or AP manager</button>
+          <button type="button" aria-pressed="false" data-r="accountant">Accountant or VAT adviser</button>
+          <button type="button" aria-pressed="false" data-r="provider">E-invoicing provider or ERP partner</button>
+          <button type="button" aria-pressed="false" data-r="investor">Investor or advisor</button>
+        </div>
+        <div class="msg" id="msg"></div>
+        <div class="ctas">
+          <button type="button" class="btn btn-gold" id="copy">Copy message</button>
+          <a class="btn btn-line" id="li" href="https://www.linkedin.com/search/results/people/?keywords=Syed%20Affan%20Ali" target="_blank" rel="noopener">Find Syed Affan Ali on LinkedIn</a>
+          <span class="copied" id="copied" role="status"></span>
+        </div>
+        <div class="details" id="details"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap" style="display:grid;gap:12px">
+    <p>Skyline artwork is an illustration. Prices, savings and revenue figures are assumptions to test with real customers. Dates and penalties come from adviser summaries of official decisions; confirm on mof.gov.ae and tax.gov.ae.</p>
+    <ul>
+      <li><a href="https://globaltaxnews.ey.com/news/2025-1964-uae-ministry-of-finance-publishes-ministerial-decisions-on-e-invoicing" target="_blank" rel="noopener">EY: UAE ministerial decisions on e-invoicing</a></li>
+      <li><a href="https://mof.gov.ae/wp-content/uploads/2026/02/UAE-Electronic-Invoice-mandatory-fields_V-1.0-23Feb2026.pdf" target="_blank" rel="noopener">UAE Ministry of Finance: e-invoice mandatory fields</a></li>
+      <li><a href="https://www.crowe.com/ae/news/new-violations-and-administrative-penalties" target="_blank" rel="noopener">Crowe: Cabinet Decision 173 of 2026 penalties</a></li>
+      <li><a href="https://www.comarch.com/trade-and-services/data-management/legal-regulation-changes/uae-extends-deadline-for-appointing-e-invoicing-service-providers-to-october-2026/" target="_blank" rel="noopener">Comarch: provider deadline extended to October 2026</a></li>
+    </ul>
+    <p>© 2026 Invoice Guard (working name)</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var $ = function (id) { return document.getElementById(id); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  /* ---------- CONTACT DETAILS: fill these in; empty values are hidden ---------- */
+  var CONTACT = { linkedin: '', email: '', phone: '', whatsapp: '' };
+
+  /* ---------- Skyline art (illustration drawn in code) ---------- */
+  var NS = 'http://www.w3.org/2000/svg';
+  function mk(name, attrs, parent) { var e = document.createElementNS(NS, name); for (var k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+  function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; var t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  var W = 1600, H = 600;
+
+  function towers(svg, o) {
+    var r = rng(o.seed), g = mk('g', {}, svg), x = o.from;
+    while (x < o.to) {
+      var w = o.minW + r() * (o.maxW - o.minW), h = o.minH + r() * (o.maxH - o.minH), top = H - h;
+      var shape = r();
+      if (shape < 0.18) { mk('path', { d: 'M' + x + ' ' + H + 'V' + (top + 26) + 'L' + (x + w / 2) + ' ' + top + 'L' + (x + w) + ' ' + (top + 26) + 'V' + H + 'Z', fill: o.fill }, g); }
+      else if (shape < 0.36) { mk('rect', { x: x, y: top, width: w, height: h, fill: o.fill }, g); mk('rect', { x: x + w * .2, y: top - 22, width: w * .6, height: 24, fill: o.fill }, g); mk('rect', { x: x + w * .47, y: top - 44, width: 2.5, height: 24, fill: o.fill }, g); }
+      else { mk('rect', { x: x, y: top, width: w, height: h, fill: o.fill }, g); }
+      if (o.windows) {
+        for (var wy = top + 14; wy < H - 10; wy += 13) for (var wx = x + 7; wx < x + w - 8; wx += 10) {
+          if (r() < o.density) mk('rect', { x: wx, y: wy, width: 3.2, height: 5, class: 'w tw' + Math.floor(r() * 4), 'fill-opacity': 0.55 + r() * 0.4 }, g);
+        }
+      }
+      x += w + o.gap * r() + 2;
+    }
+  }
+
+  function burjKhalifa(svg, cx) {
+    var defs = mk('defs', {}, svg);
+    var gr = mk('linearGradient', { id: 'bk-' + cx, x1: 0, x2: 1, y1: 0, y2: 0 }, defs);
+    mk('stop', { offset: '0', 'stop-color': '#171C45' }, gr); mk('stop', { offset: '.55', 'stop-color': '#3A3F7F' }, gr); mk('stop', { offset: '1', 'stop-color': '#171C45' }, gr);
+    var tiers = [[0, 36], [90, 36], [90, 30], [165, 30], [165, 24], [235, 24], [235, 18], [295, 18], [295, 13], [350, 13], [350, 8.5], [395, 8.5], [395, 4.2], [425, 4.2], [425, 1.8], [520, 1.2]];
+    var left = [], right = [];
+    tiers.forEach(function (t) { left.push((cx - t[1]) + ' ' + (H - t[0])); right.unshift((cx + t[1]) + ' ' + (H - t[0])); });
+    mk('polygon', { points: left.concat(right).join(' '), fill: 'url(#bk-' + cx + ')' }, svg);
+    mk('rect', { x: cx - 1.4, y: H - 520, width: 2.8, height: 520, fill: '#FFD98A', 'fill-opacity': 0.5 }, svg);
+    for (var i = 0; i < 28; i++) { mk('rect', { x: cx - 1 + (i % 2 ? -9 : 7), y: H - 40 - i * 15, width: 2.4, height: 4, class: 'w tw' + (i % 4), 'fill-opacity': .7 }, svg); }
+    mk('circle', { cx: cx, cy: H - 520, r: 4, fill: '#FF6A5B', class: 'beacon' }, svg);
+  }
+
+  function burjAlArab(svg, x) {
+    var base = H - 6;
+    mk('rect', { x: x - 80, y: base, width: 260, height: 6, fill: '#1A2050' }, svg);
+    mk('path', { d: 'M' + x + ' ' + base + 'V' + (base - 210) + 'Q' + (x + 92) + ' ' + (base - 150) + ' ' + (x + 70) + ' ' + base + 'Z', fill: '#2B3170' }, svg);
+    mk('path', { d: 'M' + (x - 3) + ' ' + (base - 215) + 'L' + (x + 3) + ' ' + (base - 215) + 'L' + (x + 2) + ' ' + (base - 250) + 'Z', fill: '#2B3170' }, svg);
+    mk('path', { d: 'M' + (x + 6) + ' ' + (base - 190) + 'Q' + (x + 62) + ' ' + (base - 140) + ' ' + (x + 56) + ' ' + (base - 8), fill: 'none', stroke: '#FFD98A', 'stroke-opacity': .55, 'stroke-width': 2 }, svg);
+  }
+
+  function skyline(id, mode, wide) {
+    var svg = $(id); if (!svg) return;
+    svg.setAttribute('viewBox', wide ? '0 0 1600 600' : '0 0 1600 600');
+    if (mode === 'far') towers(svg, { seed: 11, from: -20, to: 1640, minW: 28, maxW: 56, minH: 80, maxH: 220, gap: 6, fill: '#3C3479', windows: false });
+    if (mode === 'mid') { towers(svg, { seed: 23, from: -20, to: 1640, minW: 34, maxW: 70, minH: 110, maxH: 300, gap: 10, fill: '#241F5C', windows: true, density: .22 }); }
+    if (mode === 'near') {
+      towers(svg, { seed: 5, from: -30, to: 640, minW: 40, maxW: 86, minH: 70, maxH: 210, gap: 14, fill: '#150F3F', windows: true, density: .3 });
+      burjAlArab(svg, 330);
+      burjKhalifa(svg, 1010);
+      towers(svg, { seed: 9, from: 1110, to: 1640, minW: 40, maxW: 90, minH: 60, maxH: 260, gap: 14, fill: '#150F3F', windows: true, density: .3 });
+      mk('rect', { x: 0, y: H - 12, width: W, height: 12, fill: '#0C0828' }, svg);
+    }
+  }
+  function framed() { var narrow = window.innerWidth < 700; ['sk-far', 'sk-mid', 'sk-near', 'fk-far', 'fk-near'].forEach(function (id) { var s = $(id); if (s) s.setAttribute('viewBox', narrow ? '690 0 640 600' : '0 0 1600 600'); }); }
+  skyline('sk-far', 'far'); skyline('sk-mid', 'mid'); skyline('sk-near', 'near'); skyline('fk-far', 'mid'); skyline('fk-near', 'far');
+  framed(); window.addEventListener('resize', framed);
+
+  function stars(id, n, seed) {
+    var s = $(id); if (!s) return; var r = rng(seed);
+    for (var i = 0; i < n; i++) { var d = document.createElement('i'), z = 1.5 + r() * 2.2; d.className = 'st tw' + Math.floor(r() * 4); d.style.cssText = 'left:' + (r() * 100).toFixed(2) + '%;top:' + (r() * 100).toFixed(2) + '%;width:' + z.toFixed(1) + 'px;height:' + z.toFixed(1) + 'px'; s.appendChild(d); }
+  }
+  stars('stars', 90, 3); stars('stars2', 70, 8);
+
+  /* ---------- Parallax ---------- */
+  var layers = $$('.lyr'), floats = $$('.float');
+  var mx = 0, my = 0, ticking = false;
+  function paint() {
+    ticking = false;
+    var sy = window.scrollY || 0;
+    layers.forEach(function (l) {
+      var d = parseFloat(l.getAttribute('data-d')) || 0;
+      var inHero = l.closest('.hero');
+      var y = inHero ? sy * d * 0.55 : 0;
+      l.style.transform = 'translate3d(' + (mx * d * -60).toFixed(1) + 'px,' + (y + my * d * -24).toFixed(1) + 'px,0)';
+    });
+    floats.forEach(function (f) {
+      var d = parseFloat(f.getAttribute('data-d')) || 0.5;
+      f.style.transform = 'translate3d(' + (mx * d * 38).toFixed(1) + 'px,' + (my * d * 26 - sy * d * 0.08).toFixed(1) + 'px,0)';
+    });
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    $('progress').style.width = (h > 0 ? Math.min(100, sy / h * 100) : 0) + '%';
+  }
+  function req() { if (!ticking) { ticking = true; requestAnimationFrame(paint); } }
+  window.addEventListener('scroll', req, { passive: true });
+  if (!reduce) window.addEventListener('mousemove', function (e) { mx = e.clientX / window.innerWidth - 0.5; my = e.clientY / window.innerHeight - 0.5; req(); }, { passive: true });
+  paint();
+
+  /* ---------- Reveal on scroll ---------- */
+  var rvs = $$('.rv');
+  if ('IntersectionObserver' in window && !reduce) {
+    var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }); }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+    rvs.forEach(function (el) { var rc = el.getBoundingClientRect(); if (rc.top > window.innerHeight * 0.92) { el.classList.add('pre'); io.observe(el); } else { el.classList.add('in'); } });
+  } else { rvs.forEach(function (el) { el.classList.add('in'); }); }
+  // in-view flags for the timeline and bars (they animate on first view)
+  ['timeline', 'bars'].forEach(function (id) {
+    var el = $(id); if (!el) return;
+    if ('IntersectionObserver' in window) { var o = new IntersectionObserver(function (es) { if (es[0].isIntersecting) { el.classList.add('in'); o.disconnect(); } }, { threshold: 0.3 }); o.observe(el); } else { el.classList.add('in'); }
+  });
+
+  /* ---------- Nav highlight ---------- */
+  var links = $$('#navlinks a');
+  if ('IntersectionObserver' in window) {
+    var no = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id); }); } }); }, { rootMargin: '-45% 0px -50% 0px' });
+    links.forEach(function (a) { var s = $(a.getAttribute('href').slice(1)); if (s) no.observe(s); });
+  }
+
+  /* ---------- Countdown ---------- */
+  function daysTo(y, m, d) { var now = new Date(); var t = new Date(y, m - 1, d); return Math.max(0, Math.ceil((t - now) / 864e5)); }
+  var d1 = daysTo(2027, 1, 1), d2 = daysTo(2027, 7, 1);
+  (function () { var el = $('days1'); if (reduce) { el.textContent = d1; } else { var t0 = null; (function step(ts) { t0 = t0 || ts; var p = Math.min(1, (ts - t0) / 1400); el.textContent = Math.round(d1 * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); })(performance.now()); } $('days2txt').textContent = 'All other businesses in ' + d2 + ' days'; })();
+
+  /* ---------- Conveyor demo ---------- */
+  var belt = $('belt'), mode = 'without', lost = 0, saved = 0, visible = false, timer = null, alive = [];
+  var KINDS = [
+    { t: 'ok', w: .5 }, { t: 'dup', w: .17 }, { t: 'over', w: .17 }, { t: 'vat', w: .16 }
+  ];
+  function aedS(n) { return 'AED ' + Math.round(n).toLocaleString('en-US'); }
+  function pick() { var r = Math.random(), a = 0; for (var i = 0; i < KINDS.length; i++) { a += KINDS[i].w; if (r < a) return KINDS[i].t; } return 'ok'; }
+  function setMeters() { $('lostv').textContent = aedS(lost); $('savedv').textContent = aedS(saved); }
+  function clearBelt() { alive.forEach(function (b) { if (b.parentNode) b.parentNode.removeChild(b); }); alive = []; lost = 0; saved = 0; setMeters(); }
+  function popAt(x, y, txt, green) { var p = document.createElement('div'); p.className = 'pop' + (green ? ' green' : ''); p.textContent = txt; p.style.left = x + 'px'; p.style.top = y + 'px'; belt.appendChild(p); setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 1500); }
+  function spawn() {
+    if (!visible || document.hidden) return;
+    var Wd = belt.clientWidth, type = pick(), amt = Math.round((6 + Math.random() * 44) * 1000 / 100) * 100;
+    var b = document.createElement('div'); b.className = 'bill ' + (type === 'ok' ? 'good' : 'bad');
+    var label = { ok: 'Matches contract', dup: 'Duplicate bill', over: 'Price above PO', vat: 'TRN missing' }[type];
+    var loss = type === 'dup' ? amt : type === 'over' ? amt * 0.1 : type === 'vat' ? amt * 0.05 : 0;
+    b.innerHTML = '<b>' + aedS(amt) + '</b><i>' + label + '</i>';
+    b.style.transform = 'translateX(-130px)'; belt.appendChild(b); alive.push(b);
+    var dur = Math.max(4.8, Math.min(8, 7 * (Wd + 260) / 1000));
+    void b.offsetWidth;
+    b.style.transition = 'transform ' + dur + 's linear'; b.style.transform = 'translateX(' + (Wd + 10) + 'px)';
+    var gateX = Wd * 0.55 - 58, frac = (gateX + 130) / (Wd + 140);
+    var m = mode;
+    if (m === 'with' && type !== 'ok') {
+      setTimeout(function () {
+        if (!b.parentNode || mode !== 'with') return;
+        var cs = getComputedStyle(b).transform, tx = cs && cs !== 'none' ? new DOMMatrix(cs).m41 : gateX;
+        b.style.transition = 'none'; b.style.transform = 'translateX(' + tx + 'px)'; void b.offsetWidth;
+        b.classList.remove('bad'); b.classList.add('held'); b.querySelector('i').textContent = 'Held for review';
+        b.style.transition = 'transform .6s ease'; b.style.transform = 'translate(' + tx + 'px, 128px)';
+        saved += loss; setMeters(); popAt(tx + 20, 70, '+' + aedS(loss), true);
+        setTimeout(function () { if (b.parentNode) b.style.opacity = '0'; }, 2600);
+        setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 3200);
+      }, dur * frac * 1000);
+    } else {
+      setTimeout(function () {
+        if (!b.parentNode) return;
+        if (type !== 'ok' && mode === m) { lost += loss; setMeters(); popAt(Wd - 120, 130, '−' + aedS(loss), false); }
+        if (b.parentNode) b.parentNode.removeChild(b);
+      }, dur * 1000 + 100);
+    }
+  }
+  function startBelt() { stopBelt(); if (reduce) { clearBelt(); lost = 112400; saved = 0; if (mode === 'with') { lost = 0; saved = 112400; } setMeters(); return; } spawn(); timer = setInterval(spawn, 1050); }
+  function stopBelt() { if (timer) { clearInterval(timer); timer = null; } }
+  function setMode(m) {
+    mode = m; belt.setAttribute('data-mode', m);
+    $('m-without').setAttribute('aria-selected', m === 'without'); $('m-with').setAttribute('aria-selected', m === 'with');
+    clearBelt(); if (visible) startBelt();
+  }
+  $('m-without').addEventListener('click', function () { setMode('without'); });
+  $('m-with').addEventListener('click', function () { setMode('with'); });
+  if ('IntersectionObserver' in window) { new IntersectionObserver(function (es) { visible = es[0].isIntersecting; if (visible) startBelt(); else stopBelt(); }, { threshold: 0.25 }).observe($('demo')); } else { visible = true; startBelt(); }
+  // after 14s without the guard, nudge toward the comparison
+  setTimeout(function () { if (mode === 'without' && visible) setMode('with'); }, 16000);
+
+  /* ---------- Stepper ---------- */
+  var sb = $$('.stepbtn'), panes = $$('.pane'), cur = 0, stTimer = null, howVisible = false, paused = false, howBox = $('how-box');
+  function goStep(i, user) {
+    cur = (i + 4) % 4;
+    sb.forEach(function (b, k) { b.setAttribute('aria-selected', k === cur); if (k === cur) { var bar = b.querySelector('.bar'); bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = ''; } });
+    panes.forEach(function (p, k) { p.classList.toggle('on', k === cur); });
+    if (user) { paused = true; howBox.classList.add('autopaused'); }
+    clearTimeout(stTimer); if (!paused && howVisible && !reduce) stTimer = setTimeout(function () { goStep(cur + 1); }, 4500);
+  }
+  sb.forEach(function (b) { b.addEventListener('click', function () { goStep(parseInt(b.getAttribute('data-s'), 10), true); }); });
+  if ('IntersectionObserver' in window) { new IntersectionObserver(function (es) { howVisible = es[0].isIntersecting; if (howVisible) goStep(cur); else clearTimeout(stTimer); }, { threshold: 0.35 }).observe(howBox); }
+
+  /* ---------- ROI calculator ---------- */
+  function aed(n) { return 'AED ' + Math.round(n).toLocaleString('en-US'); }
+  function fee(bills) { return bills <= 500 ? 1500 : bills <= 2000 ? 3000 : 6000; }
+  function calc() {
+    var spend = parseFloat($('spend').value), leak = parseFloat($('leak').value), vat = parseFloat($('vat').value), bills = parseFloat($('bills').value);
+    $('spend-o').textContent = 'AED ' + spend.toLocaleString('en-US') + 'm'; $('leak-o').textContent = leak.toFixed(2) + '%';
+    $('vat-o').textContent = 'AED ' + vat.toFixed(1) + 'm'; $('bills-o').textContent = bills.toLocaleString('en-US');
+    var vL = spend * 1e6 * leak / 100, vV = vat * 1e6 * 0.05, staff = Math.min(3, Math.max(0.25, bills / 1500)), vT = staff * 10000 * 12, tot = vL + vV + vT, f = fee(bills) * 12;
+    $('r-leak').textContent = aed(vL); $('r-vat').textContent = aed(vV); $('r-time').textContent = aed(vT);
+    $('r-total').innerHTML = '<b>' + aed(tot) + '</b>'; $('r-fee').textContent = aed(f);
+    $('r-roi').textContent = (tot / f).toFixed(1).replace(/\.0$/, '') + '×';
+  }
+  ['spend', 'leak', 'vat', 'bills'].forEach(function (id) { $(id).addEventListener('input', calc); }); calc();
+
+  /* ---------- Contact ---------- */
+  var MSG = {
+    finance: 'Hello Syed, I lead finance or accounts payable at a UAE company. I would like to learn how Invoice Guard could check our supplier bills before payment and help us prepare suppliers for e-invoicing in 2027. Could we speak this week?',
+    accountant: 'Hello Syed, I am an accountant or VAT adviser working with UAE clients. I would like to understand how Invoice Guard flags invoice and VAT risks, and whether there is a way for us to work together.',
+    provider: 'Hello Syed, I work with an e-invoicing provider or ERP in the UAE. I would like to explore how Invoice Guard could work alongside our platform to check bills for price, duplicates and VAT.',
+    investor: 'Hello Syed, I am interested in Invoice Guard and the UAE e-invoicing opportunity. I would like to hear about your progress, the evidence so far and your plans for the next phase.'
+  };
+  var role = 'finance';
+  function showMsg() { $('msg').textContent = MSG[role]; }
+  $$('#who button').forEach(function (b) { b.addEventListener('click', function () { role = b.getAttribute('data-r'); $$('#who button').forEach(function (x) { x.setAttribute('aria-pressed', x === b); }); showMsg(); }); });
+  showMsg();
+  function flash(t) { var c = $('copied'); c.textContent = t; c.classList.add('show'); setTimeout(function () { c.classList.remove('show'); }, 2200); }
+  function copyText(t, done) {
+    function fallback() { var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); var ok = false; try { ok = document.execCommand('copy'); } catch (e) {} document.body.removeChild(ta); done(ok); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { done(true); }, fallback); else fallback();
+  }
+  $('copy').addEventListener('click', function () { copyText($('msg').textContent, function (ok) { flash(ok ? 'Copied. Paste it into LinkedIn.' : 'Select the text above to copy.'); }); });
+  if (CONTACT.linkedin) $('li').setAttribute('href', CONTACT.linkedin);
+  var det = $('details');
+  [['Email', CONTACT.email], ['Phone', CONTACT.phone], ['WhatsApp', CONTACT.whatsapp]].forEach(function (p) {
+    if (!p[1]) return; var s = document.createElement('span'); s.textContent = p[0] + ': ' + p[1] + ' ';
+    var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Copy'; b.addEventListener('click', function () { copyText(p[1], function () { flash(p[0] + ' copied'); }); });
+    s.appendChild(b); det.appendChild(s);
+  });
+})();
+</script>
